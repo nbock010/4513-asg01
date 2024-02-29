@@ -6,8 +6,17 @@ const supaUrl = 'https://cwpmjmysxkqqhklusqbc.supabase.co';
 const supaAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3cG1qbXlzeGtxcWhrbHVzcWJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDg3OTkwNDYsImV4cCI6MjAyNDM3NTA0Nn0.yUNE4b3mGoNYpks3924WC5uQclycl-cuLjgm8OprDfg';
 const supabase = supa.createClient(supaUrl, supaAnonKey);
 
-//TODO SET UP SOME ERROR TEXT; SEE DOC ASSIGNMENT
 
+//Thanks to Guy for helping with this 
+function jsonMsg(res, message) {
+    res.json({ message: message });
+}
+//json(res, "specific error for bad input")
+
+//DELET THIS
+// if (!data.length) {
+//     jsonMsg(res, "specific error message here")
+// }
 
 app.listen(8080, () => {
     console.log('listening on port 8080');
@@ -18,7 +27,16 @@ app.get('/f1/seasons/', async (req, res) => {
     const { data, error } = await supabase
         .from('season') //NOTE: most tables are named in singular, not plural
         .select();
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from seasons")
+    }
+    else if (!data.length) {
+        jsonMsg(res, "Zero results returned- double check query parameters")
+    }
+    else {
+        res.send(data);
+    }
+
 })
 
 //Returns all the circuits
@@ -29,7 +47,15 @@ app.get('/f1/circuits', async (req, res) => {
     const { data, error } = await supabase
         .from('circuits')
         .select();
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from circuits")
+    }
+    else if (!data.length) {
+        jsonMsg(res, "Zero results returned- double check query parameters")
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns specific circuit based on circuitRef (use 'monaco' to test)
@@ -38,7 +64,15 @@ app.get('/f1/circuits/:circuitRef', async (req, res) => {
         .from('circuits')
         .select()
         .eq('circuitRef', req.params.circuitRef);
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from circuits")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for circuitRef = " + req.params.circuitRef))
+    }
+    else {
+        res.send(data);
+    }
 })
 
 //Returns circuits used in a given year. Ordered by round, ascending
@@ -48,7 +82,15 @@ app.get('/f1/circuits/season/:year', async (req, res) => {
         .select('name, race (year)')
         .eq('race.year', req.params.year)
         .order('round', { referencedTable: 'race', ascending: true });
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from circuits")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for circuitRef = " + req.params.year))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns all constructors
@@ -56,7 +98,15 @@ app.get('/f1/constructors', async (req, res) => {
     const { data, error } = await supabase
         .from('constructor')
         .select();
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from constructors")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found"))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the specific constructor based on a constructorRef
@@ -65,7 +115,15 @@ app.get('/f1/constructors/:ref', async (req, res) => {
         .from('constructor')
         .select()
         .eq('constructorRef', req.params.ref)
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from constructors")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for constructorRef = " + req.params.ref))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns all the drivers
@@ -73,7 +131,15 @@ app.get('/f1/drivers', async (req, res) => {
     const { data, error } = await supabase
         .from('driver')
         .select();
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from drivers")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found"))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the specific driver based on a driverRef
@@ -82,7 +148,15 @@ app.get('/f1/drivers/:ref', async (req, res) => {
         .from('driver')
         .select()
         .eq('driverRef', req.params.ref)
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from drivers")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for driverRef= " + req.params.ref))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the drivers whose surname (case insensitive) begins with the provided substring
@@ -91,7 +165,15 @@ app.get('/f1/drivers/search/:substring', async (req, res) => {
         .from('driver')
         .select()
         .ilike(('surname'), (req.params.substring + '%'));
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from drivers")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for surname beginning with " + req.params.substring))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the drivers within a given race
@@ -101,7 +183,15 @@ app.get('/f1/drivers/race/:raceId', async (req, res) => {
         .from('result')
         .select('driver!inner(*)')
         .eq('raceId', req.params.raceId);
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from one or more tables")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the circuit name, location, and country of a given race by id
@@ -110,7 +200,15 @@ app.get('/f1/races/:raceId', async (req, res) => {
         .from('race')
         .select('circuits!inner(name, location, country)')
         .eq('raceId', req.params.raceId);
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from one or more tables")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the races within a given season. 
@@ -121,7 +219,15 @@ app.get('/f1/races/season/:year', async (req, res) => {
         .select()
         .eq('year', req.params.year)
         .order('round', { ascending: true });
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from races")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for year = " + req.params.year))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 
@@ -132,7 +238,15 @@ app.get('/f1/races/season/:year/:round', async (req, res) => {
         .select()
         .eq('year', req.params.year)
         .eq('round', req.params.round);
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from races")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for year = " + req.params.year + " and round = " + req.params.round))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //returns all the races for a given circuit per a given circuitRef
@@ -142,7 +256,15 @@ app.get('/f1/races/circuits/:ref', async (req, res) => {
         .from('circuits')
         .select('race!inner(*)')
         .eq('circuitRef', req.params.ref);
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from one or more tables")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for circuitRef = " + req.params.ref))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns all the races for a given circuit between (and including) two years
@@ -154,7 +276,18 @@ app.get('/f1/races/circuits/:ref/seasons/:start/:end', async (req, res) => {
         .eq('circuitRef', req.params.ref)
         .gte('race.year', req.params.start)
         .lte('race.year', req.params.end);
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from one or more tables")
+    }
+    else if (req.params.start > req.params.end) {
+        jsonMsg(res, "Error: The start year is greater than the end year")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for circuitRef = " + req.params.ref + " and start = " + req.params.start + " and end = " + req.params.end))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns results for the specified race
@@ -166,7 +299,15 @@ app.get('/f1/results/:raceId', async (req, res) => {
         .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, points, laps, time')
         .eq('race.raceId', req.params.raceId)
         .order('grid', { ascending: true });
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from one or more tables")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the results of a given driver for a given driverRef
@@ -176,7 +317,15 @@ app.get('/f1/results/driver/:ref', async (req, res) => {
         .from('driver')
         .select('result!inner(*)')
         .ilike('driverRef', req.params.ref)
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from drivers")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for driverRef = " + req.params.ref))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the results of a given driver between (and including) two years
@@ -188,7 +337,18 @@ app.get('/f1/results/driver/:ref/seasons/:start/:end', async (req, res) => {
         .ilike('driver.driverRef', req.params.ref)
         .gte('race.year', req.params.start)
         .lte('race.year', req.params.end);
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from one or more tables")
+    }
+    else if (req.params.start > req.params.end) {
+        jsonMsg(res, "Error: The start year is greater than the end year")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for driverRef = " + req.params.ref + " and start = " + req.params.start + " and end = " + req.params.end))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the qualifying results for the specified race.
@@ -200,7 +360,15 @@ app.get('/f1/qualifying/:raceId', async (req, res) => {
         .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, q1, q2, q3')
         .eq('race.raceId', req.params.raceId)
         .order('position', { ascending: true })
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from one or more tables")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the current season driver standings table for the specified race.
@@ -212,7 +380,15 @@ app.get('/f1/standings/:raceId/drivers', async (req, res) => {
         .select('driverStandingsId, driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), points, position, wins')
         .eq('raceId', req.params.raceId)
         .order('position', { ascending: true });
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from driverStandings")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 //Returns the current season constructor standings table for the specified race.
@@ -224,7 +400,15 @@ app.get('/f1/standings/:raceId/constructors', async (req, res) => {
         .select('constructorStandingsId, constructor!inner(constructorRef, name, nationality), race!inner(name, round, year, date), points, position, wins')
         .eq('raceId', req.params.raceId)
         .order('position', { ascending: true });
-    res.send(data);
+    if (error) {
+        jsonMsg(res, "error reading from constructorStandings")
+    }
+    else if (!data.length) {
+        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    }
+    else {
+        res.send(data);
+    };
 })
 
 
