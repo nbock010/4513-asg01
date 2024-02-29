@@ -11,13 +11,16 @@ const supabase = supa.createClient(supaUrl, supaAnonKey);
 function jsonMsg(res, message) {
     res.json({ message: message });
 }
-
-
 //note to self: json(res, "specific error for bad input")
 
 app.listen(8080, () => {
     console.log('listening on port 8080');
 });
+
+//returns an error message if the given parameter is not a number
+function nanError(int) {
+
+}
 
 //Returns all the seasons
 app.get('/api/seasons/', async (req, res) => {
@@ -183,36 +186,50 @@ app.get('/api/drivers/search/:substring', async (req, res) => {
 //Returns the drivers within a given race
 //Credit to Evan Gadsby for helping me out with this one
 app.get('/api/drivers/race/:raceId', async (req, res) => {
-    const { data, error } = await supabase
-        .from('result')
-        .select('driver!inner(*)')
-        .eq('raceId', req.params.raceId);
-    if (error) {
-        jsonMsg(res, "error reading from one or more tables")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    //throws error if raceId parameter isn't a number
+    if (isNaN(req.params.raceId)) {
+        jsonMsg(res, (req.params.raceId + " is not a number"))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('result')
+            .select('driver!inner(*)')
+            .eq('raceId', req.params.raceId);
+        if (error) {
+            jsonMsg(res, "error reading from one or more tables")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 //Returns the circuit name, location, and country of a given race by id
 app.get('/api/races/:raceId', async (req, res) => {
-    const { data, error } = await supabase
-        .from('race')
-        .select('circuits!inner(name, location, country)')
-        .eq('raceId', req.params.raceId);
-    if (error) {
-        jsonMsg(res, "error reading from one or more tables")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    //throws error if raceId parameter isn't a number
+    if (isNaN(req.params.raceId)) {
+        jsonMsg(res, (req.params.raceId + " is not a number"))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('race')
+            .select('circuits!inner(name, location, country)')
+            .eq('raceId', req.params.raceId);
+        if (error) {
+            jsonMsg(res, "error reading from one or more tables")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 //Returns the races within a given season. 
@@ -291,7 +308,7 @@ app.get('/api/races/circuits/:ref', async (req, res) => {
 
 //Returns all the races for a given circuit between (and including) two years
 //test with 'monza', 2015, and 2020
-app.get('/api/races/circuits/:ref/seasons/:start/:end', async (req, res) => {
+app.get('/api/races/circuits/:ref/season/:start/:end', async (req, res) => {
     //throws error if either year parameter isn't a number
     if (isNaN(req.params.start) || isNaN(req.params.end)) {
         jsonMsg(res, ("one of the parameters is not a number: " + req.params.start + " or " + req.params.end))
@@ -323,20 +340,27 @@ app.get('/api/races/circuits/:ref/seasons/:start/:end', async (req, res) => {
 //Substituted the foreign key values for the appropriate ones (e.g. driver->surname, forename, code, etc.)
 //Ordered by grid, ascending
 app.get('/api/results/:raceId', async (req, res) => {
-    const { data, error } = await supabase
-        .from('result')
-        .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, points, laps, time')
-        .eq('race.raceId', req.params.raceId)
-        .order('grid', { ascending: true });
-    if (error) {
-        jsonMsg(res, "error reading from one or more tables")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    //throws error if raceId parameter isn't a number
+    if (isNaN(req.params.raceId)) {
+        jsonMsg(res, (req.params.raceId + " is not a number"))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('result')
+            .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, points, laps, time')
+            .eq('race.raceId', req.params.raceId)
+            .order('grid', { ascending: true });
+        if (error) {
+            jsonMsg(res, "error reading from one or more tables")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 //Returns the results of a given driver for a given driverRef
@@ -391,60 +415,82 @@ app.get('/api/results/driver/:ref/seasons/:start/:end', async (req, res) => {
 //Substituted the foreign key values for the appropriate ones (e.g. driver->surname, forename, code, etc.)
 //Note: I am simply interpreting the fields added from the qualifying table are appropriate to the query, though they aren't specified in the assignment document.
 app.get('/api/qualifying/:raceId', async (req, res) => {
-    const { data, error } = await supabase
-        .from('qualifying')
-        .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, q1, q2, q3')
-        .eq('race.raceId', req.params.raceId)
-        .order('position', { ascending: true })
-    if (error) {
-        jsonMsg(res, "error reading from one or more tables")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    //throws error if raceId parameter isn't a number
+    if (isNaN(req.params.raceId)) {
+        jsonMsg(res, (req.params.raceId + " is not a number"))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('qualifying')
+            .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, q1, q2, q3')
+            .eq('race.raceId', req.params.raceId)
+            .order('position', { ascending: true })
+        if (error) {
+            jsonMsg(res, "error reading from one or more tables")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 //Returns the current season driver standings table for the specified race.
 //Sorted by position, ascending
 //Fields follow the similar foreign key-substitutes as the route above
 app.get('/api/standings/:raceId/drivers', async (req, res) => {
-    const { data, error } = await supabase
-        .from('driverStanding')
-        .select('driverStandingsId, driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), points, position, wins')
-        .eq('raceId', req.params.raceId)
-        .order('position', { ascending: true });
-    if (error) {
-        jsonMsg(res, "error reading from driverStandings")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    //throws error if raceId parameter isn't a number
+    if (isNaN(req.params.raceId)) {
+        jsonMsg(res, (req.params.raceId + " is not a number"))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('driverStanding')
+            .select('driverStandingsId, driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), points, position, wins')
+            .eq('raceId', req.params.raceId)
+            .order('position', { ascending: true });
+        if (error) {
+            jsonMsg(res, "error reading from driverStandings")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 //Returns the current season constructor standings table for the specified race.
 //Sorted by position, ascending
 //Fields follow the similar foreign key-substitutes as the route above
 app.get('/api/standings/:raceId/constructors', async (req, res) => {
-    const { data, error } = await supabase
-        .from('constructorStanding')
-        .select('constructorStandingsId, constructor!inner(constructorRef, name, nationality), race!inner(name, round, year, date), points, position, wins')
-        .eq('raceId', req.params.raceId)
-        .order('position', { ascending: true });
-    if (error) {
-        jsonMsg(res, "error reading from constructorStandings")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+    //throws error if raceId parameter isn't a number
+    if (isNaN(req.params.raceId)) {
+        jsonMsg(res, (req.params.raceId + " is not a number"))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('constructorStanding')
+            .select('constructorStandingsId, constructor!inner(constructorRef, name, nationality), race!inner(name, round, year, date), points, position, wins')
+            .eq('raceId', req.params.raceId)
+            .order('position', { ascending: true });
+        if (error) {
+            jsonMsg(res, "error reading from constructorStandings")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for raceId = " + req.params.raceId))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
+
 })
 
 
