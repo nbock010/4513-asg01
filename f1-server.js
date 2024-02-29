@@ -11,12 +11,9 @@ const supabase = supa.createClient(supaUrl, supaAnonKey);
 function jsonMsg(res, message) {
     res.json({ message: message });
 }
-//json(res, "specific error for bad input")
+//note to self: json(res, "specific error for bad input")
 
-//DELET THIS
-// if (!data.length) {
-//     jsonMsg(res, "specific error message here")
-// }
+
 
 app.listen(8080, () => {
     console.log('listening on port 8080');
