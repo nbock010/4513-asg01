@@ -20,7 +20,7 @@ app.listen(8080, () => {
 });
 
 //Returns all the seasons
-app.get('/f1/seasons/', async (req, res) => {
+app.get('/api/seasons/', async (req, res) => {
     const { data, error } = await supabase
         .from('season') //NOTE: most tables are named in singular, not plural
         .select();
@@ -40,7 +40,7 @@ app.get('/f1/seasons/', async (req, res) => {
 /**
  * NOTE: circuits is the only table named in plural, all others are named in singular.
  * **/
-app.get('/f1/circuits', async (req, res) => {
+app.get('/api/circuits', async (req, res) => {
     const { data, error } = await supabase
         .from('circuits')
         .select();
@@ -56,7 +56,7 @@ app.get('/f1/circuits', async (req, res) => {
 })
 
 //Returns specific circuit based on circuitRef (use 'monaco' to test)
-app.get('/f1/circuits/:circuitRef', async (req, res) => {
+app.get('/api/circuits/:circuitRef', async (req, res) => {
     const { data, error } = await supabase
         .from('circuits')
         .select()
@@ -73,7 +73,7 @@ app.get('/f1/circuits/:circuitRef', async (req, res) => {
 })
 
 //Returns circuits used in a given year. Ordered by round, ascending
-app.get('/f1/circuits/season/:year', async (req, res) => {
+app.get('/api/circuits/season/:year', async (req, res) => {
     const { data, error } = await supabase
         .from('circuits')
         .select('name, race (year)')
@@ -91,7 +91,7 @@ app.get('/f1/circuits/season/:year', async (req, res) => {
 })
 
 //Returns all constructors
-app.get('/f1/constructors', async (req, res) => {
+app.get('/api/constructors', async (req, res) => {
     const { data, error } = await supabase
         .from('constructor')
         .select();
@@ -107,7 +107,7 @@ app.get('/f1/constructors', async (req, res) => {
 })
 
 //Returns the specific constructor based on a constructorRef
-app.get('/f1/constructors/:ref', async (req, res) => {
+app.get('/api/constructors/:ref', async (req, res) => {
     const { data, error } = await supabase
         .from('constructor')
         .select()
@@ -124,7 +124,7 @@ app.get('/f1/constructors/:ref', async (req, res) => {
 })
 
 //Returns all the drivers
-app.get('/f1/drivers', async (req, res) => {
+app.get('/api/drivers', async (req, res) => {
     const { data, error } = await supabase
         .from('driver')
         .select();
@@ -140,7 +140,7 @@ app.get('/f1/drivers', async (req, res) => {
 })
 
 //Returns the specific driver based on a driverRef
-app.get('/f1/drivers/:ref', async (req, res) => {
+app.get('/api/drivers/:ref', async (req, res) => {
     const { data, error } = await supabase
         .from('driver')
         .select()
@@ -157,7 +157,7 @@ app.get('/f1/drivers/:ref', async (req, res) => {
 })
 
 //Returns the drivers whose surname (case insensitive) begins with the provided substring
-app.get('/f1/drivers/search/:substring', async (req, res) => {
+app.get('/api/drivers/search/:substring', async (req, res) => {
     const { data, error } = await supabase
         .from('driver')
         .select()
@@ -175,7 +175,7 @@ app.get('/f1/drivers/search/:substring', async (req, res) => {
 
 //Returns the drivers within a given race
 //Credit to Evan Gadsby for helping me out with this one
-app.get('/f1/drivers/race/:raceId', async (req, res) => {
+app.get('/api/drivers/race/:raceId', async (req, res) => {
     const { data, error } = await supabase
         .from('result')
         .select('driver!inner(*)')
@@ -192,7 +192,7 @@ app.get('/f1/drivers/race/:raceId', async (req, res) => {
 })
 
 //Returns the circuit name, location, and country of a given race by id
-app.get('/f1/races/:raceId', async (req, res) => {
+app.get('/api/races/:raceId', async (req, res) => {
     const { data, error } = await supabase
         .from('race')
         .select('circuits!inner(name, location, country)')
@@ -210,7 +210,7 @@ app.get('/f1/races/:raceId', async (req, res) => {
 
 //Returns the races within a given season. 
 //Ordered by round (presumably, ascending; the assignment document does not specify)
-app.get('/f1/races/season/:year', async (req, res) => {
+app.get('/api/races/season/:year', async (req, res) => {
     const { data, error } = await supabase
         .from('race')
         .select()
@@ -229,7 +229,7 @@ app.get('/f1/races/season/:year', async (req, res) => {
 
 
 //Returns the specific race determined by the round and the year (i.e. the 4th race in 2022)
-app.get('/f1/races/season/:year/:round', async (req, res) => {
+app.get('/api/races/season/:year/:round', async (req, res) => {
     const { data, error } = await supabase
         .from('race')
         .select()
@@ -248,7 +248,7 @@ app.get('/f1/races/season/:year/:round', async (req, res) => {
 
 //returns all the races for a given circuit per a given circuitRef
 //test with 'monza'
-app.get('/f1/races/circuits/:ref', async (req, res) => {
+app.get('/api/races/circuits/:ref', async (req, res) => {
     const { data, error } = await supabase
         .from('circuits')
         .select('race!inner(*)')
@@ -266,7 +266,7 @@ app.get('/f1/races/circuits/:ref', async (req, res) => {
 
 //Returns all the races for a given circuit between (and including) two years
 //test with 'monza', 2015, and 2020
-app.get('/f1/races/circuits/:ref/seasons/:start/:end', async (req, res) => {
+app.get('/api/races/circuits/:ref/seasons/:start/:end', async (req, res) => {
     const { data, error } = await supabase
         .from('circuits')
         .select('race!inner(*)')
@@ -290,7 +290,7 @@ app.get('/f1/races/circuits/:ref/seasons/:start/:end', async (req, res) => {
 //Returns results for the specified race
 //Substituted the foreign key values for the appropriate ones (e.g. driver->surname, forename, code, etc.)
 //Ordered by grid, ascending
-app.get('/f1/results/:raceId', async (req, res) => {
+app.get('/api/results/:raceId', async (req, res) => {
     const { data, error } = await supabase
         .from('result')
         .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, points, laps, time')
@@ -309,7 +309,7 @@ app.get('/f1/results/:raceId', async (req, res) => {
 
 //Returns the results of a given driver for a given driverRef
 //test with 'max_verstappen'
-app.get('/f1/results/driver/:ref', async (req, res) => {
+app.get('/api/results/driver/:ref', async (req, res) => {
     const { data, error } = await supabase
         .from('driver')
         .select('result!inner(*)')
@@ -327,7 +327,7 @@ app.get('/f1/results/driver/:ref', async (req, res) => {
 
 //Returns the results of a given driver between (and including) two years
 //test with 'sainz', 2020, and 2022
-app.get('/f1/results/driver/:ref/seasons/:start/:end', async (req, res) => {
+app.get('/api/results/driver/:ref/seasons/:start/:end', async (req, res) => {
     const { data, error } = await supabase
         .from('result')
         .select('*, race!inner(), driver!inner()')
@@ -351,7 +351,7 @@ app.get('/f1/results/driver/:ref/seasons/:start/:end', async (req, res) => {
 //Returns the qualifying results for the specified race.
 //Substituted the foreign key values for the appropriate ones (e.g. driver->surname, forename, code, etc.)
 //Note: I am simply interpreting the fields added from the qualifying table are appropriate to the query, though they aren't specified in the assignment document.
-app.get('/f1/qualifying/:raceId', async (req, res) => {
+app.get('/api/qualifying/:raceId', async (req, res) => {
     const { data, error } = await supabase
         .from('qualifying')
         .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, q1, q2, q3')
@@ -371,7 +371,7 @@ app.get('/f1/qualifying/:raceId', async (req, res) => {
 //Returns the current season driver standings table for the specified race.
 //Sorted by position, ascending
 //Fields follow the similar foreign key-substitutes as the route above
-app.get('/f1/standings/:raceId/drivers', async (req, res) => {
+app.get('/api/standings/:raceId/drivers', async (req, res) => {
     const { data, error } = await supabase
         .from('driverStanding')
         .select('driverStandingsId, driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), points, position, wins')
@@ -391,7 +391,7 @@ app.get('/f1/standings/:raceId/drivers', async (req, res) => {
 //Returns the current season constructor standings table for the specified race.
 //Sorted by position, ascending
 //Fields follow the similar foreign key-substitutes as the route above
-app.get('/f1/standings/:raceId/constructors', async (req, res) => {
+app.get('/api/standings/:raceId/constructors', async (req, res) => {
     const { data, error } = await supabase
         .from('constructorStanding')
         .select('constructorStandingsId, constructor!inner(constructorRef, name, nationality), race!inner(name, round, year, date), points, position, wins')
@@ -410,7 +410,7 @@ app.get('/f1/standings/:raceId/constructors', async (req, res) => {
 
 
 //QUERY FORMAT for my easy reference
-/**app.get('/f1/TABLENAME/:SomeParameter', async (req, res) => {
+/**app.get('/api/TABLENAME/:SomeParameter', async (req, res) => {
   const { data, error } = await supabase
    .from('TABLENAME')
        .select('etc1, etc2, someOtherTable (etc1, etc2),')
