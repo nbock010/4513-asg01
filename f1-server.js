@@ -145,7 +145,87 @@ app.get('/f1/races/circuits/:ref', async (req, res) => {
     res.send(data);
 })
 
+//Returns all the races for a given circuit between (and including) two years
+//test with 'monza', 2015, and 2020
+app.get('/f1/races/circuits/:ref/seasons/:start/:end', async (req, res) => {
+    const { data, error } = await supabase
+        .from('circuits')
+        .select('race!inner(*)')
+        .eq('circuitRef', req.params.ref)
+        .gte('race.year', req.params.start)
+        .lte('race.year', req.params.end);
+    res.send(data);
+})
 
+//Returns results for the specified race
+//Substituted the foreign key values for the appropriate ones (e.g. driver->surname, forename, code, etc.)
+//Ordered by grid, ascending
+app.get('/f1/results/:raceId', async (req, res) => {
+    const { data, error } = await supabase
+        .from('result')
+        .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, points, laps, time')
+        .eq('race.raceId', req.params.raceId)
+        .order('grid', { ascending: true });
+    res.send(data);
+})
+
+//Returns the results of a given driver for a given driverRef
+//test with 'max_verstappen'
+app.get('/f1/results/driver/:ref', async (req, res) => {
+    const { data, error } = await supabase
+        .from('driver')
+        .select('result!inner(*)')
+        .ilike('driverRef', req.params.ref)
+    res.send(data);
+})
+
+//Returns the results of a given driver between (and including) two years
+//test with 'sainz', 2020, and 2022
+app.get('/f1/results/driver/:ref/seasons/:start/:end', async (req, res) => {
+    const { data, error } = await supabase
+        .from('result')
+        .select('*, race!inner(), driver!inner()')
+        .ilike('driver.driverRef', req.params.ref)
+        .gte('race.year', req.params.start)
+        .lte('race.year', req.params.end);
+    res.send(data);
+})
+
+//Returns the qualifying results for the specified race.
+//Substituted the foreign key values for the appropriate ones (e.g. driver->surname, forename, code, etc.)
+//Note: I am simply interpreting the fields added from the qualifying table are appropriate to the query, though they aren't specified in the assignment document.
+app.get('/f1/qualifying/:raceId', async (req, res) => {
+    const { data, error } = await supabase
+        .from('qualifying')
+        .select('driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), constructor!inner(name, constructorRef, nationality), position, q1, q2, q3')
+        .eq('race.raceId', req.params.raceId)
+        .order('position', { ascending: true })
+    res.send(data);
+})
+
+//Returns the current season driver standings table for the specified race.
+//Sorted by position, ascending
+//Fields follow the similar foreign key-substitutes as the route above
+app.get('/f1/standings/:raceId/drivers', async (req, res) => {
+    const { data, error } = await supabase
+        .from('driverStanding')
+        .select('driverStandingsId, driver!inner(driverRef, code, forename, surname), race!inner(name, round, year, date), points, position, wins')
+        .eq('raceId', req.params.raceId)
+        .order('position', { ascending: true });
+    res.send(data);
+})
+
+//Returns the current season constructor standings table for the specified race.
+//Sorted by position, ascending
+//Fields follow the similar foreign key-substitutes as the route above
+app.get('/f1/standings/:raceId/constructors', async (req, res) => {
+    const { data, error } = await supabase
+        .from('constructorStanding')
+        .select('constructorStandingsId, constructor!inner(constructorRef, name, nationality), race!inner(name, round, year, date), points, position, wins')
+        .eq('raceId', req.params.raceId)
+        .order('position', { ascending: true });
+    res.send(data);
+})
 
 
 //QUERY FORMAT for my easy reference
