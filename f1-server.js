@@ -11,9 +11,9 @@ const supabase = supa.createClient(supaUrl, supaAnonKey);
 function jsonMsg(res, message) {
     res.json({ message: message });
 }
+
+
 //note to self: json(res, "specific error for bad input")
-
-
 
 app.listen(8080, () => {
     console.log('listening on port 8080');
@@ -74,20 +74,27 @@ app.get('/api/circuits/:circuitRef', async (req, res) => {
 
 //Returns circuits used in a given year. Ordered by round, ascending
 app.get('/api/circuits/season/:year', async (req, res) => {
-    const { data, error } = await supabase
-        .from('circuits')
-        .select('name, race (year)')
-        .eq('race.year', req.params.year)
-        .order('round', { referencedTable: 'race', ascending: true });
-    if (error) {
-        jsonMsg(res, "error reading from circuits")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for circuitRef = " + req.params.year))
+    //throws error if year parameter isn't a number
+    if (isNaN(req.params.year)) {
+        jsonMsg(res, (req.params.year + " is not a number"))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('circuits')
+            .select('name, race (year)')
+            .eq('race.year', req.params.year)
+            .order('round', { referencedTable: 'race', ascending: true });
+        if (error) {
+            jsonMsg(res, "error reading from circuits")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for circuitRef = " + req.params.year))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 //Returns all constructors
@@ -149,7 +156,7 @@ app.get('/api/drivers/:ref', async (req, res) => {
         jsonMsg(res, "error reading from drivers")
     }
     else if (!data.length) {
-        jsonMsg(res, ("Zero results found for driverRef= " + req.params.ref))
+        jsonMsg(res, ("Zero results found for driverRef= " + req.params.ref + "; note the query is case sensitive"))
     }
     else {
         res.send(data);
@@ -211,39 +218,57 @@ app.get('/api/races/:raceId', async (req, res) => {
 //Returns the races within a given season. 
 //Ordered by round (presumably, ascending; the assignment document does not specify)
 app.get('/api/races/season/:year', async (req, res) => {
-    const { data, error } = await supabase
-        .from('race')
-        .select()
-        .eq('year', req.params.year)
-        .order('round', { ascending: true });
-    if (error) {
-        jsonMsg(res, "error reading from races")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for year = " + req.params.year))
+    //throws error if year parameter isn't a number
+    if (isNaN(req.params.year)) {
+        jsonMsg(res, (req.params.year + " is not a number"))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('race')
+            .select()
+            .eq('year', req.params.year)
+            .order('round', { ascending: true });
+        if (error) {
+            jsonMsg(res, "error reading from races")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for year = " + req.params.year))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 
 //Returns the specific race determined by the round and the year (i.e. the 4th race in 2022)
 app.get('/api/races/season/:year/:round', async (req, res) => {
-    const { data, error } = await supabase
-        .from('race')
-        .select()
-        .eq('year', req.params.year)
-        .eq('round', req.params.round);
-    if (error) {
-        jsonMsg(res, "error reading from races")
+    //throws error if year parameter isn't a number
+    if (isNaN(req.params.year)) {
+        jsonMsg(res, (req.params.year + " is not a number"))
     }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for year = " + req.params.year + " and round = " + req.params.round))
+    //throws error if round isn't a number
+    else if (isNaN(req.params.round)) {
+        jsonMsg(res, (req.params.round + " is not a number"))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('race')
+            .select()
+            .eq('year', req.params.year)
+            .eq('round', req.params.round);
+        if (error) {
+            jsonMsg(res, "error reading from races")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for year = " + req.params.year + " and round = " + req.params.round))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 //returns all the races for a given circuit per a given circuitRef
@@ -267,24 +292,31 @@ app.get('/api/races/circuits/:ref', async (req, res) => {
 //Returns all the races for a given circuit between (and including) two years
 //test with 'monza', 2015, and 2020
 app.get('/api/races/circuits/:ref/seasons/:start/:end', async (req, res) => {
-    const { data, error } = await supabase
-        .from('circuits')
-        .select('race!inner(*)')
-        .eq('circuitRef', req.params.ref)
-        .gte('race.year', req.params.start)
-        .lte('race.year', req.params.end);
-    if (error) {
-        jsonMsg(res, "error reading from one or more tables")
-    }
-    else if (req.params.start > req.params.end) {
-        jsonMsg(res, "Error: The start year is greater than the end year")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for circuitRef = " + req.params.ref + " and start = " + req.params.start + " and end = " + req.params.end))
+    //throws error if either year parameter isn't a number
+    if (isNaN(req.params.start) || isNaN(req.params.end)) {
+        jsonMsg(res, ("one of the parameters is not a number: " + req.params.start + " or " + req.params.end))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('circuits')
+            .select('race!inner(*)')
+            .eq('circuitRef', req.params.ref)
+            .gte('race.year', req.params.start)
+            .lte('race.year', req.params.end);
+        if (error) {
+            jsonMsg(res, "error reading from one or more tables")
+        }
+        else if (req.params.start > req.params.end) {
+            jsonMsg(res, "Error: The start year is greater than the end year")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for circuitRef = " + req.params.ref + " and start = " + req.params.start + " and end = " + req.params.end))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 //Returns results for the specified race
@@ -328,24 +360,31 @@ app.get('/api/results/driver/:ref', async (req, res) => {
 //Returns the results of a given driver between (and including) two years
 //test with 'sainz', 2020, and 2022
 app.get('/api/results/driver/:ref/seasons/:start/:end', async (req, res) => {
-    const { data, error } = await supabase
-        .from('result')
-        .select('*, race!inner(), driver!inner()')
-        .ilike('driver.driverRef', req.params.ref)
-        .gte('race.year', req.params.start)
-        .lte('race.year', req.params.end);
-    if (error) {
-        jsonMsg(res, "error reading from one or more tables")
-    }
-    else if (req.params.start > req.params.end) {
-        jsonMsg(res, "Error: The start year is greater than the end year")
-    }
-    else if (!data.length) {
-        jsonMsg(res, ("Zero results found for driverRef = " + req.params.ref + " and start = " + req.params.start + " and end = " + req.params.end))
+    //throws error if either year parameter isn't a number
+    if (isNaN(req.params.start) || isNaN(req.params.end)) {
+        jsonMsg(res, ("one of the parameters is not a number: " + req.params.start + " or " + req.params.end))
     }
     else {
-        res.send(data);
-    };
+        const { data, error } = await supabase
+            .from('result')
+            .select('*, race!inner(), driver!inner()')
+            .ilike('driver.driverRef', req.params.ref)
+            .gte('race.year', req.params.start)
+            .lte('race.year', req.params.end);
+        if (error) {
+            jsonMsg(res, "error reading from one or more tables")
+        }
+        else if (req.params.start > req.params.end) {
+            jsonMsg(res, "Error: The start year is greater than the end year")
+        }
+        else if (!data.length) {
+            jsonMsg(res, ("Zero results found for driverRef = " + req.params.ref + " and start = " + req.params.start + " and end = " + req.params.end))
+        }
+        else {
+            res.send(data);
+        };
+    }
+
 })
 
 //Returns the qualifying results for the specified race.
